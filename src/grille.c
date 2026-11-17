@@ -1,8 +1,45 @@
 #include "grille.h"
-#include <stdlib.h>
-#include <time.h>
 #include <stdio.h>
-#include <stdbool.h>
+
+// Codes de couleur ANSI pour le dégradé
+
+#define RESET   "\033[0m"
+// BLEU - Début du dégradé
+#define b1  "\e[48;5;17m"  // Bleu très foncé
+#define b2  "\e[48;5;18m"  // Bleu foncé
+#define b3  "\e[48;5;19m"  // Bleu marine
+#define b4  "\e[48;5;20m"  // Bleu
+#define b5  "\e[48;5;21m"  // Bleu roi
+
+// CYAN/TURQUOISE - Transition
+#define c1  "\e[48;5;27m"  // Bleu vif
+#define c2  "\e[48;5;33m"  // Cyan foncé
+#define c3  "\e[48;5;39m"  // Cyan
+#define c4  "\e[48;5;45m"  // Cyan clair
+#define c5  "\e[48;5;51m"  // Cyan très clair
+
+// VERT - Milieu
+#define v1  "\e[48;5;40m"  // Vert foncé
+#define v2  "\e[48;5;46m"  // Vert lime
+#define v3  "\e[48;5;82m"  // Vert vif
+#define v4  "\e[48;5;118m" // Vert clair
+#define v5  "\e[48;5;154m" // Vert lime clair
+
+// JAUNE - Transition
+#define j1  "\e[48;5;190m" // Jaune-vert
+#define j2  "\e[48;5;226m" // Jaune vif
+#define j3  "\e[48;5;220m" // Jaune or
+#define j4  "\e[48;5;214m" // Jaune-orange
+#define j5  "\e[48;5;208m" // Orange clair
+
+// ORANGE
+#define o1  "\e[48;5;202m" // Orange
+#define o2  "\e[48;5;196m" // Orange-rouge
+#define o3  "\e[48;5;160m" // Rouge-orange
+#define o4  "\e[48;5;124m" // Rouge foncé
+#define o5  "\e[48;5;88m"  // Rouge bordeaux
+
+#define ro "\e[38;5;205m" // ROSE_VIF (texte pour les chiffres)
 
 /*
 ================================================================================
@@ -11,14 +48,14 @@ Auteur     : Anouk
 Param      : grille (Grille*) - Pointeur vers la structure à initialiser
              lignes (int) - Nombre de lignes souhaité
              colonnes (int) - Nombre de colonnes souhaité
-Traitement : Définit les dimensions de la grille (bornées par MIN/MAX) et 
+Traitement : Définit les dimensions de la grille (bornées par MIN/MAX) et
              initialise toutes les cellules à 0.
 Retour     : Aucun (void)
 ================================================================================
 */
 void initialiser_grille(Grille *grille, int lignes, int colonnes) {
     if (!grille) return;
-    
+
     // Bornage des dimensions
     if (lignes < TAILLE_MIN) lignes = TAILLE_MIN;
     if (lignes > TAILLE_MAX) lignes = TAILLE_MAX;
@@ -43,7 +80,7 @@ Fonction   : afficher_grille
 Auteur     : Anouk
 Param      : grille (Grille*) - Pointeur vers la grille
              curseur (Position) - Position actuelle du joueur pour affichage
-Traitement : Affiche la grille caractère par caractère en appliquant un 
+Traitement : Affiche la grille caractère par caractère en appliquant un
              dégradé de couleurs ANSI basé sur la progression du chemin.
 Retour     : Aucun (void)
 ================================================================================
@@ -51,36 +88,14 @@ Retour     : Aucun (void)
 void afficher_grille(Grille *grille, Position curseur) {
     // Tableau de couleurs avec un dégradé fluide : ROUGE -> JAUNE -> VERT -> CYAN -> BLEU
     const char* couleurs[] = {
-        o5, o4, o3, o2, o1,      
-        j5, j4, j3, j2, j1,      
-        v5, v4, v3, v2, v1,      
-        c5, c4, c3, c2, c1,      
-        b5, b4, b3, b2, b1       
+        o5, o4, o3, o2, o1,
+        j5, j4, j3, j2, j1,
+        v5, v4, v3, v2, v1,
+        c5, c4, c3, c2, c1,
+        b5, b4, b3, b2, b1
     };
     int nb_couleurs = 25;
     int total_cases = grille->lignes * grille->colonnes;
-
-    // Pré-calcul pour le mapping des couleurs (optionnel dans l'algo actuel mais conservé)
-    int numero_par_chiffre[NB_NUMEROS_MAX + 1] = {0};
-    for (int i = 0; i < grille->lignes; i++) {
-        for (int j = 0; j < grille->colonnes; j++) {
-            if (grille->cellules[i][j].chiffre != 0) {
-                // Trouver le numéro qui devrait être à cette position
-                // On doit chercher dans la solution hamiltonienne
-                // Ici, on suppose que le numéro est stocké dans la cellule
-                // On mappe le chiffre preset au numéro de case
-                // On ajoute 1 pour que les numéros commencent à 1
-                // et non à 0
-                // Cela permet de colorer correctement les presets
-                // basé sur leur position dans le chemin
-                // Exemple : si le chiffre preset est 3 et qu'il est à la 10ème case
-                // alors numero_par_chiffre[3] = 10
-                // Cela sera utilisé plus tard pour colorer les presets
-                // selon leur position dans le chemin
-                numero_par_chiffre[grille->cellules[i][j].chiffre] = i * grille->colonnes + j + 1;
-            }
-        }
-    }
 
     for (int i = 0; i < grille->lignes; i++) {
         for (int j = 0; j < grille->colonnes; j++) {
@@ -106,7 +121,7 @@ void afficher_grille(Grille *grille, Position curseur) {
             else if (grille->cellules[i][j].chiffre != 0) {
                 int chiffre = grille->cellules[i][j].chiffre;
 
-                // Si la case a été visitée (cas rare ici car géré par le if précédent, 
+                // Si la case a été visitée (cas rare ici car géré par le if précédent,
                 // mais conservé pour robustesse d'affichage)
                 if (grille->cellules[i][j].numero != 0) {
                     int max_chiffre = 0;

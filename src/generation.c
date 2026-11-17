@@ -1,8 +1,5 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <stdbool.h>
 #include "grille.h"
+#include <stdlib.h>
 
 /*
 ================================================================================
@@ -11,7 +8,7 @@ Auteur     : Anouk
 Param      : x (int*) - Pointeur pour stocker l'abscisse générée
              y (int*) - Pointeur pour stocker l'ordonnée générée
              taille_grille (int) - Dimension de la grille carrée
-Traitement : Génère des coordonnées aléatoires et vérifie la parité pour 
+Traitement : Génère des coordonnées aléatoires et vérifie la parité pour
              assurer la faisabilité d'un chemin hamiltonien sur grille impaire.
 Retour     : Position - La position de départ générée.
 ================================================================================
@@ -20,7 +17,7 @@ Position depart_aleatoire(int *x, int *y, int taille_grille) {
     while (true) {
         *x = rand() % taille_grille;
         *y = rand() % taille_grille;
-        
+
         if (taille_grille * taille_grille % 2 == 1 && ((*x + *y) % 2 == 1)) {
             continue;
         }
@@ -60,20 +57,20 @@ Param      : ligne, colonne (int) - Coordonnées actuelles
              visite (int**) - Matrice de suivi du chemin
              debut_temps (clock_t) - Temps de départ pour le timeout
              limite_temps (double) - Durée max autorisée en secondes
-Traitement : Algorithme récursif (backtracking) pour trouver un chemin 
-             hamiltonien passant par toutes les cases. Inclut une sécurité 
+Traitement : Algorithme récursif (backtracking) pour trouver un chemin
+             hamiltonien passant par toutes les cases. Inclut une sécurité
              temporelle pour éviter les blocages sur les grandes grilles.
 Retour     : int - 1 si un chemin est trouvé, 0 sinon.
 ================================================================================
 */
 int hamiltonien(int ligne, int colonne, int pas, int taille_grille, int **visite, clock_t debut_temps, double limite_temps) {
-    
+
     // Vérification du timeout
     double temps_ecoule = (double)(clock() - debut_temps) / CLOCKS_PER_SEC;
     if (temps_ecoule > limite_temps) {
-        return 0; 
+        return 0;
     }
-   
+
     visite[ligne][colonne] = pas;
 
     // Condition d'arrêt : Chemin complet trouvé
@@ -89,10 +86,10 @@ int hamiltonien(int ligne, int colonne, int pas, int taille_grille, int **visite
             if (hamiltonien(new_l, new_c, pas + 1, taille_grille, visite, debut_temps, limite_temps)) {
                 return 1;
             }
-            
+
             // Vérification post-récursion pour arrêter proprement en cas de timeout
             if ((double)(clock() - debut_temps) / CLOCKS_PER_SEC > limite_temps) {
-                visite[ligne][colonne] = 0; 
+                visite[ligne][colonne] = 0;
                 return 0;
             }
         }
@@ -106,7 +103,7 @@ int hamiltonien(int ligne, int colonne, int pas, int taille_grille, int **visite
 /*
 ================================================================================
 Fonction   : placer_numeros_sur_chemin
-Auteur     : Anouk 
+Auteur     : Anouk
 Param      : grille (Grille*) - Grille à modifier
              visited (int**) - Le chemin hamiltonien généré
              taille (int) - Taille de la grille
@@ -118,16 +115,16 @@ Retour     : Aucun (void)
 */
 void placer_numeros_sur_chemin(Grille *grille, int **visited, int taille, int nb_numeros) {
     if (nb_numeros <= 0) return;
-    
+
     int total_cases = taille * taille;
     int espacement_base = total_cases / nb_numeros;
-    
+
     typedef struct {
         int x, y;
     } coordonees;
-    
+
     coordonees *chemin = (coordonees*)malloc(total_cases * sizeof(coordonees));
-    
+
     // Reconstruction linéaire du chemin
     for (int pas = 1; pas <= total_cases; pas++) {
         for (int i = 0; i < taille; i++) {
@@ -139,11 +136,11 @@ void placer_numeros_sur_chemin(Grille *grille, int **visited, int taille, int nb
             }
         }
     }
-    
+
     // Placement des numéros
     for (int num = 1; num <= nb_numeros; num++) {
         int position;
-        
+
         if (num == 1) {
             position = 0;
         } else if (num == nb_numeros) {
@@ -153,16 +150,16 @@ void placer_numeros_sur_chemin(Grille *grille, int **visited, int taille, int nb
             int position_ideale = (num - 1) * espacement_base;
             int variation = espacement_base / 5;
             position = position_ideale + (rand() % (2 * variation + 1)) - variation;
-            
+
             if (position < num - 1) position = num - 1;
             if (position >= total_cases) position = total_cases - 1;
         }
-        
+
         int x = chemin[position].x;
         int y = chemin[position].y;
-        
+
         grille->cellules[y][x].chiffre = num;
     }
-    
+
     free(chemin);
 }

@@ -1,8 +1,4 @@
 #include "grille.h"
-#include <stdlib.h>
-#include <time.h>
-#include <stdio.h>
-#include <stdbool.h>
 
 /*
 ================================================================================
@@ -10,7 +6,7 @@ Fonction   : deplacer_curseur
 Auteur     : Anouk et Emilien
 Param      : curseur (Position*) - Pointeur vers la position actuelle
              grille (Grille*) - Pointeur vers la grille de jeu
-             touche (char) - Caractère saisi par l'utilisateur (up, down, left, right)
+             touche (char) - Direction saisie (Z/Q/S/D ou W/A/S/D)
 Traitement : Gère le déplacement du curseur en vérifiant les collisions,
              le backtracking (retour arrière) et la progression sur les
              chiffres prédéfinis.
@@ -22,22 +18,27 @@ void deplacer_curseur(Position *curseur, Grille *grille, char touche) {
     int new_x = curseur->x;
     int new_y = curseur->y;
 
-    // Gestion des inputs (Haut, Bas, Gauche, Droite) avec les flèches directionnelles
+    // Gestion des inputs (Haut, Bas, Gauche, Droite).
+    // Les flèches sont traduites en Z/Q/S/D par la boucle de jeu (main.c).
     switch (touche) {
-        case 72: // Flèche HAUT (Code ASCII 72)
+        case 'z': case 'Z': case 'w': case 'W': // HAUT
             if (curseur->y > 0) new_y--;
             break;
 
-        case 80: // Flèche BAS (Code ASCII 80)
+        case 's': case 'S': // BAS
             if (curseur->y < grille->lignes - 1) new_y++;
             break;
-        case 75: // Flèche GAUCHE (Code ASCII 75)
+
+        case 'q': case 'Q': case 'a': case 'A': // GAUCHE
             if (curseur->x > 0) new_x--;
             break;
 
-        case 77: // Flèche DROITE (Code ASCII 77)
+        case 'd': case 'D': // DROITE
             if (curseur->x < grille->colonnes - 1) new_x++;
             break;
+
+        default: // Touche sans effet
+            return;
     }
 
     // Vérification de sécurité des limites de la grille
@@ -58,7 +59,7 @@ void deplacer_curseur(Position *curseur, Grille *grille, char touche) {
             // Gestion de la décrémentation du "chiffre actuel" (preset)
             if (grille->cellules[curseur->y][curseur->x].chiffre == curseur->chiffre_actuel) {
                 curseur->chiffre_actuel = curseur->chiffre_actuel - 1;
-            } 
+            }
             else if (grille->cellules[curseur->y][curseur->x].chiffre == 1) {
                 curseur->chiffre_actuel = 1;
             }
@@ -77,29 +78,29 @@ void deplacer_curseur(Position *curseur, Grille *grille, char touche) {
     // --- CAS 2 : DÉPLACEMENT NORMAL (Progression) ---
     // Vers une case vide ou un chiffre preset
     if (nv_numero == 0) {
-        
+
         // Sous-cas A : La case contient un chiffre preset (ex: 2, 3, 4...)
         // On doit vérifier si c'est bien le chiffre suivant attendu
         if (grille->cellules[new_y][new_x].chiffre != 0 &&
             grille->cellules[new_y][new_x].chiffre == curseur->chiffre_actuel + 1) {
-            
+
             curseur->x = new_x;
             curseur->y = new_y;
-            
+
             // On marque la case comme visitée (incrément du numéro de passage)
             grille->cellules[new_y][new_x].numero = numero_actuel + 1;
-            
+
             // Mise à jour du chiffre actuel du joueur
             curseur->chiffre_actuel = grille->cellules[curseur->y][curseur->x].chiffre;
         }
-        
+
         // Sous-cas B : Cas spécial du retour au départ (chiffre 1)
         if (nv_numero == 1 && grille->cellules[new_y][new_x].chiffre == 1) {
             grille->cellules[curseur->y][curseur->x].numero = 0;
             curseur->x = new_x;
             curseur->y = new_y;
         }
-        
+
         // Sous-cas C : La case est vide et sans preset
         else if (grille->cellules[new_y][new_x].chiffre == 0) {
             curseur->x = new_x;

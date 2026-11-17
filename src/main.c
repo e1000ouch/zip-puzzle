@@ -1,13 +1,53 @@
 #include "grille.h"
-#include "sauvegarde.h" 
+#include "sauvegarde.h"
+#include "console.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <conio.h>
-#include <windows.h>
-#include "console.h"
 
-int hamiltonien_boucle(int path, time_t start_time, double time_limit);
+#define FICHIER_SAUVEGARDE "sauvegarde.txt"
+
+/*
+================================================================================
+Fonction   : lire_touche
+Auteur     : Emilien
+Param      : Aucun
+Traitement : Lit une touche sans attendre Entrée. Les flèches directionnelles
+             envoient deux codes (0 ou 224 puis 72/80/75/77) : on les traduit
+             en Z/S/Q/D pour que deplacer_curseur n'ait qu'un seul jeu de
+             touches à gérer.
+Retour     : int - La touche lue (flèches converties en 'z', 's', 'q', 'd').
+================================================================================
+*/
+static int lire_touche(void) {
+    int touche = _getch();
+    if (touche == 0 || touche == 224) {
+        switch (_getch()) {
+            case 72: return 'z'; // Flèche HAUT
+            case 80: return 's'; // Flèche BAS
+            case 75: return 'q'; // Flèche GAUCHE
+            case 77: return 'd'; // Flèche DROITE
+            default: return 0;   // Autre touche spéciale ignorée
+        }
+    }
+    return touche;
+}
+
+/*
+================================================================================
+Fonction   : vider_entree
+Auteur     : Emilien
+Param      : Aucun
+Traitement : Vide le tampon de saisie après un scanf pour qu'un reste de
+             ligne ne soit pas interprété comme la réponse suivante.
+Retour     : Aucun (void)
+================================================================================
+*/
+static void vider_entree(void) {
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF);
+}
 
 /*
 ================================================================================
@@ -19,12 +59,11 @@ Retour     : int - Code de sortie (0).
 ================================================================================
 */
 int main() {
-    SetConsoleOutputCP(CP_UTF8);
-    SetConsoleCP(CP_UTF8);
+    initialiser_console();
     srand(time(NULL));
-    
+
     // Variable pour maintenir le programme ouvert tant qu'on ne choisit pas "Quitter"
-    bool programme_en_cours = true; 
+    bool programme_en_cours = true;
 
     while (programme_en_cours) {
         Grille grille;
@@ -36,9 +75,9 @@ int main() {
         // --- MENU INITIAL ---
         bool input_correct = false;
         while (!input_correct) {
-            system("cls"); 
-            
-            // Affichage de l'ASCII Art 
+            system("cls");
+
+            // Affichage de l'ASCII Art
             printf("  ▀▀                     ▀▀        \n");
             printf("  ██ ▄█▀█▄ ██ ██   ▀▀▀██ ██  ████▄ \n");
             printf("  ██ ██▄█▀ ██ ██     ▄█▀ ██  ██ ██ \n");
@@ -49,7 +88,7 @@ int main() {
             printf("-------------------------------\n");
             printf("      1. Nouvelle Partie       \n");
             printf("      2. Continuer Partie      \n");
-            printf("      3. Quitter le Jeu        \n"); 
+            printf("      3. Quitter le Jeu        \n");
             printf("-------------------------------\n");
             printf("Choix : ");
 
@@ -68,10 +107,10 @@ int main() {
 
         // --- GESTION DU CHARGEMENT ---
         if (choix_menu == '2') {
-            if (charger_partie(&grille, &curseur, "sauvegarde.txt")) {
+            if (charger_partie(&grille, &curseur, FICHIER_SAUVEGARDE)) {
                 printf("\nPartie chargee avec succes !\n");
                 partie_chargee = true;
-                system("pause"); 
+                system("pause");
             } else {
                 printf("\nAucune sauvegarde trouvee ou erreur. Retour au menu...\n");
                 system("pause");
@@ -81,6 +120,7 @@ int main() {
 
         // --- INITIALISATION (Si nouvelle partie) ---
         if (!partie_chargee) {
+            afficher_curseur();
             system("cls");
             int taille, nb_numeros;
 
@@ -88,23 +128,17 @@ int main() {
 
             // Saisie de la TAILLE
             printf("\nTaille de la grille (5-10) [defaut 5]: ");
-            if (scanf("%d", &taille) != 1) {
-                taille = 5; 
-                while (getchar() != '\n'); 
-            } 
-            else if (taille < TAILLE_MIN || taille > TAILLE_MAX) {
-                taille = 5; 
+            if (scanf("%d", &taille) != 1 || taille < TAILLE_MIN || taille > TAILLE_MAX) {
+                taille = 5;
             }
+            vider_entree();
 
             // Saisie du NOMBRE DE NUMEROS
-            printf("\nNombre de numeros (1-12) [defaut 5]: ");
-            if (scanf("%d", &nb_numeros) != 1) {
-                nb_numeros = 5;
-                while (getchar() != '\n'); 
-            } 
-            else if (nb_numeros < 1 || nb_numeros > NB_NUMEROS_MAX) {
+            printf("\nNombre de numeros (2-12) [defaut 5]: ");
+            if (scanf("%d", &nb_numeros) != 1 || nb_numeros < 2 || nb_numeros > NB_NUMEROS_MAX) {
                 nb_numeros = 5;
             }
+            vider_entree();
 
             // Allocation et génération du chemin hamiltonien
             int **visited = (int**) malloc(taille * sizeof(int *));
@@ -125,9 +159,9 @@ int main() {
 
                 curseur = depart_aleatoire(&depart_x, &depart_y, taille);
                 clock_t start_check = clock();
-                
-                if (hamiltonien(depart_x, depart_y, 1, taille, visited, start_check, 0.9)) {
-                    trouve = 1; 
+
+                if (hamiltonien(depart_x, depart_y, 1, taille, visited, start_check, LIMITE_GENERATION_S)) {
+                    trouve = 1;
                 }
             }
 
@@ -156,9 +190,9 @@ int main() {
             gotoxy(0, 0);
             afficher_grille(&grille, curseur);
 
-            printf("\nflèches directionnelles : Bouger | B : Sauvegarder & Menu | X : Menu Principal\n");
+            printf("\nFlèches ou ZQSD : se déplacer | B : sauvegarder et revenir au menu | X : menu sans sauvegarder\n");
 
-            char input = _getch();
+            int input = lire_touche();
 
             // CAS 'X' : Retour Menu sans sauvegarder
             if (input == 'x' || input == 'X') {
@@ -167,13 +201,13 @@ int main() {
 
             // CAS 'B' : Sauvegarder et Retour Menu
             else if (input == 'b' || input == 'B') {
-                sauvegarder_partie(&grille, &curseur, "sauvegarde.txt");
+                sauvegarder_partie(&grille, &curseur, FICHIER_SAUVEGARDE);
                 printf("\nPartie sauvegardee. Appuyez sur une touche pour revenir au menu.");
                 _getch();
                 retour_menu = true;
             }
             else {
-                deplacer_curseur(&curseur, &grille, input);
+                deplacer_curseur(&curseur, &grille, (char) input);
 
                 // CAS VICTOIRE
                 if (a_gagne(&curseur, &grille)) {
@@ -183,7 +217,7 @@ int main() {
                     printf("1. Retourner au Menu Principal\n");
                     printf("2. Quitter le jeu\n");
                     printf("Choix : ");
-                    
+
                     char choix_fin;
                     do {
                         choix_fin = _getch();

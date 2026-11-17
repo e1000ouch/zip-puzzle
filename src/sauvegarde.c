@@ -1,6 +1,5 @@
 #include "sauvegarde.h"
 #include <stdio.h>
-#include <stdlib.h>
 
 
 /*
@@ -10,17 +9,17 @@ Auteur     : Emilien et Yanis
 Param      : grille (Grille*) - Pointeur vers la grille
              curseur (Position*) - Pointeur vers la position
              nom_fichier (char*) - Destination
-Traitement : Écrit les dimensions, la position du curseur, puis l'état de 
+Traitement : Écrit les dimensions, la position du curseur, puis l'état de
              chaque cellule (numéro et chiffre) dans un fichier texte.
 Retour     : Aucun (void)
 ================================================================================
 */
 void sauvegarder_partie(Grille *grille, Position *curseur, const char *nom_fichier) {
     FILE *fichier = fopen(nom_fichier, "w");
-/*    if (fichier == NULL) {
-        printf("Erreur : Impossible de creer le fichier de sauvegarde.\n");
+    if (fichier == NULL) {
+        printf("Erreur : impossible de creer le fichier de sauvegarde.\n");
         return;
-    }*/
+    }
 
     // 1. Sauvegarder les dimensions
     fprintf(fichier, "%d %d\n", grille->lignes, grille->colonnes);
@@ -49,23 +48,30 @@ Auteur     : Emilien et Yanis
 Param      : grille (Grille*) - Pointeur pour les données chargées
              curseur (Position*) - Pointeur pour la position chargée
              nom_fichier (char*) - Fichier source
-Traitement : Ouvre le fichier en lecture, lit les dimensions, le curseur et 
+Traitement : Ouvre le fichier en lecture, lit les dimensions, le curseur et
              remplit la grille cellule par cellule.
 Retour     : bool - true si le chargement a réussi, false sinon.
 ================================================================================
 */
 bool charger_partie(Grille *grille, Position *curseur, const char *nom_fichier) {
     FILE *fichier = fopen(nom_fichier, "r");
+    if (fichier == NULL) {
+        return false; // Aucune sauvegarde
+    }
 
-    // 1. Lire les dimensions
-    if (fscanf(fichier, "%d %d", &grille->lignes, &grille->colonnes) != 2) {
-        fclose(fichier); 
+    // 1. Lire les dimensions (et refuser un fichier corrompu)
+    if (fscanf(fichier, "%d %d", &grille->lignes, &grille->colonnes) != 2
+        || grille->lignes < TAILLE_MIN || grille->lignes > TAILLE_MAX
+        || grille->colonnes < TAILLE_MIN || grille->colonnes > TAILLE_MAX) {
+        fclose(fichier);
         return false;
     }
 
-    // 2. Lire le curseur
-    if (fscanf(fichier, "%d %d %d", &curseur->x, &curseur->y, &curseur->chiffre_actuel) != 3) {
-        fclose(fichier); 
+    // 2. Lire le curseur (qui doit être dans la grille)
+    if (fscanf(fichier, "%d %d %d", &curseur->x, &curseur->y, &curseur->chiffre_actuel) != 3
+        || curseur->x < 0 || curseur->x >= grille->colonnes
+        || curseur->y < 0 || curseur->y >= grille->lignes) {
+        fclose(fichier);
         return false;
     }
 
@@ -74,7 +80,7 @@ bool charger_partie(Grille *grille, Position *curseur, const char *nom_fichier) 
         for (int j = 0; j < grille->colonnes; j++) {
             int num, chif;
             if (fscanf(fichier, "%d %d", &num, &chif) != 2) {
-                fclose(fichier); 
+                fclose(fichier);
                 return false;
             }
             grille->cellules[i][j].numero = num;

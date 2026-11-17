@@ -8,7 +8,7 @@ TARGET   = zip.exe
 SRC      = $(wildcard src/*.c)
 OBJ      = $(SRC:src/%.c=build/%.o)
 
-.PHONY: all run clean
+.PHONY: all run test clean
 
 all: $(TARGET)
 
@@ -23,6 +23,15 @@ build:
 
 run: $(TARGET)
 	./$(TARGET)
+
+# Tests de la logique du jeu (sans la boucle console de main.c)
+TEST_OBJ = $(filter-out build/main.o build/console.o,$(OBJ))
+
+build/test_logique.exe: tests/test_logique.c $(TEST_OBJ) include/*.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -o $@ tests/test_logique.c $(TEST_OBJ)
+
+test: build/test_logique.exe
+	./build/test_logique.exe
 
 clean:
 	-rm -rf build $(TARGET) sauvegarde.txt
