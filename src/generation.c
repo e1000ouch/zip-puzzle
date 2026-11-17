@@ -44,13 +44,32 @@ bool est_valide(int x, int y, int grille, int **visite) {
 }
 
 // Directions pour se déplacer dans la grille
-int directionsx[4] = {0, 1, 0, -1};
-int directionsy[4] = {-1, 0, 1, 0};
+static const int directionsx[4] = {0, 1, 0, -1};
+static const int directionsy[4] = {-1, 0, 1, 0};
+
+/*
+================================================================================
+Fonction   : nb_voisins_libres
+Auteur     : Emilien
+Param      : ligne, colonne (int) - Case à évaluer
+             taille_grille (int) - Taille de la grille
+             visite (int**) - Matrice de suivi du chemin
+Traitement : Compte les voisins orthogonaux encore libres d'une case.
+Retour     : int - Nombre de voisins libres (0 à 4).
+================================================================================
+*/
+static int nb_voisins_libres(int ligne, int colonne, int taille_grille, int **visite) {
+    int n = 0;
+    for (int i = 0; i < 4; i++) {
+        if (est_valide(ligne + directionsx[i], colonne + directionsy[i], taille_grille, visite)) n++;
+    }
+    return n;
+}
 
 /*
 ================================================================================
 Fonction   : hamiltonien
-Auteur     : Anouk
+Auteur     : Anouk (heuristique d'ordre des directions : Emilien)
 Param      : ligne, colonne (int) - Coordonnées actuelles
              pas (int) - Étape actuelle dans le chemin (1 à N*N)
              taille_grille (int) - Taille de la grille
@@ -60,6 +79,10 @@ Param      : ligne, colonne (int) - Coordonnées actuelles
 Traitement : Algorithme récursif (backtracking) pour trouver un chemin
              hamiltonien passant par toutes les cases. Inclut une sécurité
              temporelle pour éviter les blocages sur les grandes grilles.
+             Les directions sont mélangées aléatoirement puis triées selon
+             l'heuristique de Warnsdorff (on explore d'abord la case qui a le
+             moins d'issues) : chaque grille a un chemin différent et la
+             recherche aboutit quasi instantanément, même en 10x10.
 Retour     : int - 1 si un chemin est trouvé, 0 sinon.
 ================================================================================
 */
@@ -78,9 +101,33 @@ int hamiltonien(int ligne, int colonne, int pas, int taille_grille, int **visite
         return 1;
     }
 
+    // Ordre d'exploration : mélange aléatoire (Fisher-Yates)...
+    int ordre[4] = {0, 1, 2, 3};
+    for (int i = 3; i > 0; i--) {
+        int k = rand() % (i + 1);
+        int tmp = ordre[i]; ordre[i] = ordre[k]; ordre[k] = tmp;
+    }
+    // ... puis tri stable par nombre d'issues croissant (Warnsdorff)
+    int issues[4];
     for (int i = 0; i < 4; i++) {
-        int new_l = ligne + directionsx[i];
-        int new_c = colonne + directionsy[i];
+        int l = ligne + directionsx[ordre[i]];
+        int c = colonne + directionsy[ordre[i]];
+        issues[i] = est_valide(l, c, taille_grille, visite) ? nb_voisins_libres(l, c, taille_grille, visite) : 99;
+    }
+    for (int i = 1; i < 4; i++) {
+        int d = ordre[i], e = issues[i], j = i - 1;
+        while (j >= 0 && issues[j] > e) {
+            ordre[j + 1] = ordre[j];
+            issues[j + 1] = issues[j];
+            j--;
+        }
+        ordre[j + 1] = d;
+        issues[j + 1] = e;
+    }
+
+    for (int i = 0; i < 4; i++) {
+        int new_l = ligne + directionsx[ordre[i]];
+        int new_c = colonne + directionsy[ordre[i]];
 
         if (est_valide(new_l, new_c, taille_grille, visite)) {
             if (hamiltonien(new_l, new_c, pas + 1, taille_grille, visite, debut_temps, limite_temps)) {
