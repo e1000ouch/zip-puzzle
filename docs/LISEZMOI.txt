@@ -1,0 +1,26 @@
+ZIP - jeu de parcours logique
+=============================
+
+Lancer le jeu
+-------------
+Double-cliquez sur zip.exe (Windows 10 ou 11).
+
+Si Windows affiche "Windows a protégé votre ordinateur" (SmartScreen),
+cliquez sur "Informations complémentaires" puis "Exécuter quand même" :
+l'exécutable n'est simplement pas signé.
+
+But du jeu
+----------
+Tracez un chemin unique qui passe par TOUTES les cases de la grille,
+en reliant les chiffres dans l'ordre (1, 2, 3...) et en terminant sur
+le dernier chiffre. Déplacements horizontaux et verticaux uniquement.
+
+Commandes
+---------
+Flèches ou Z/Q/S/D  se déplacer (revenir sur ses pas efface le chemin)
+B                   sauvegarder et revenir au menu
+X                   revenir au menu sans sauvegarder
+
+La sauvegarde est écrite dans sauvegarde.txt, à côté de zip.exe.
+
+Code source : https://github.com/e1000ouch/zip-puzzle

@@ -1,118 +1,124 @@
-# 🧩 Projet ZIP - Jeu de Parcours Logique
+<div align="center">
 
-Bienvenue dans le **Projet ZIP**, une application développée en langage C dans le cadre d'une SAE en Département Informatique (S1A). Le but est de résoudre un casse-tête de parcours algorithmique en remplissant l'intégralité d'une grille générée dynamiquement.
+# ZIP — jeu de parcours logique en C
+
+**Tracez un chemin unique qui couvre toute la grille en reliant les chiffres dans l'ordre.**
+Grilles générées procéduralement, rendu couleur en console, sauvegarde de partie.
+
+[![Build](https://github.com/e1000ouch/zip-puzzle/actions/workflows/build.yml/badge.svg)](https://github.com/e1000ouch/zip-puzzle/actions/workflows/build.yml)
+[![Release](https://img.shields.io/github/v/release/e1000ouch/zip-puzzle?label=t%C3%A9l%C3%A9charger&color=2ea44f)](https://github.com/e1000ouch/zip-puzzle/releases/latest)
+![Langage](https://img.shields.io/badge/langage-C11-00599C?logo=c&logoColor=white)
+![Plateforme](https://img.shields.io/badge/plateforme-Windows-0078D6?logo=windows&logoColor=white)
+![SAE](https://img.shields.io/badge/BUT%20Informatique-SAE%20S1-8A2BE2)
+
+<img src="docs/images/partie.gif" alt="Partie de ZIP résolue en console" width="760">
+
+</div>
 
 ---
 
-## 📜 Règles du Jeu
+## Jouer tout de suite
 
-Le jeu ZIP repose sur des contraintes logiques strictes :
+1. Téléchargez **`ZIP-windows-x64.zip`** depuis la [dernière release](https://github.com/e1000ouch/zip-puzzle/releases/latest).
+2. Décompressez puis double-cliquez sur **`zip.exe`**. Aucune installation (Windows 10 / 11).
 
-* **Complétion de la grille** : Le joueur doit passer une et une seule fois par chacune des cases de la grille.
-* **Ordre numérique** : Le parcours doit respecter l'ordre des numéros pré-placés (les "presets" : 1, 2, 3...) sur la grille.
-* **Déplacements autorisés** : Le curseur peut se déplacer uniquement de manière orthogonale (Haut, Bas, Gauche, Droite).
-* **Interdiction des diagonales** : Les déplacements en diagonale ne sont pas autorisés.
-* **Backtracking (Retour arrière)** : Il est possible de rebrousser chemin pour corriger une erreur, mais le joueur doit repasser dans l'ordre inverse exact du chemin parcouru (effaçant ainsi son passage).
+> Windows SmartScreen peut signaler un exécutable non signé : *Informations complémentaires* → *Exécuter quand même*.
 
----
+## Règles
 
-## 🎮 Comment Jouer ?
+| | Règle |
+|---|---|
+| 🟩 | Passer **une et une seule fois** par chaque case de la grille |
+| 🔢 | Atteindre les chiffres **dans l'ordre** (1 → 2 → 3 …) et **terminer sur le dernier** |
+| ➕ | Se déplacer horizontalement ou verticalement, **jamais en diagonale** |
+| ↩️ | Revenir sur ses pas **efface** le chemin, case par case |
 
-### Commandes au clavier
-
-L'interface utilisateur s'exécute en mode console sous Windows. La navigation se fait désormais via les **flèches directionnelles**.
+### Commandes
 
 | Touche | Action |
-| --- | --- |
-| **⬆️ Flèche HAUT** | Déplacer le curseur vers le **Haut** |
-| **⬇️ Flèche BAS** | Déplacer le curseur vers le **Bas** |
-| **⬅️ Flèche GAUCHE** | Déplacer le curseur vers la **Gauche** |
-| **➡️ Flèche DROITE** | Déplacer le curseur vers la **Droite** |
-| **B** | **Sauvegarder** la partie et retourner au menu |
-| **X** | Retourner au menu principal **sans sauvegarder** |
+|---|---|
+| `↑` `↓` `←` `→` ou `Z` `Q` `S` `D` | Tracer le chemin |
+| `B` | Sauvegarder et revenir au menu |
+| `X` | Revenir au menu sans sauvegarder |
 
-### Menu Principal
+<p align="center">
+  <img src="docs/images/menu.png" alt="Menu principal" height="260">
+  &nbsp;
+  <img src="docs/images/victoire.png" alt="Écran de victoire" height="260">
+</p>
 
-Au lancement, un menu graphique ASCII vous propose trois options :
+## Fonctionnalités
 
-1. **Nouvelle Partie** : Permet de configurer la taille de la grille (de 5x5 à 10x10) et le nombre de chiffres objectifs (jusqu'à 12).
-2. **Continuer Partie** : Charge automatiquement l'état de la dernière partie depuis le fichier `sauvegarde.txt`.
-3. **Quitter le Jeu** : Ferme l'application.
+- **Génération procédurale** : chaque grille (5×5 à 10×10, 2 à 12 chiffres) est construite autour d'un chemin hamiltonien, donc **toujours soluble**.
+- **Rendu console soigné** : dégradé de couleurs ANSI 256 qui matérialise la progression, redessin sans clignotement (`SetConsoleCursorPosition`).
+- **Retour arrière** : le joueur peut rebrousser chemin, le compteur de chiffres suit.
+- **Sauvegarde / chargement** dans un fichier texte, avec validation des données relues.
+- **Tests automatisés** de la logique et **intégration continue** (GitHub Actions) qui compile en `-Wall -Wextra -Werror`, lance les tests et publie l'exécutable.
 
----
+## Comment la grille est générée
 
-## 🛠️ Installation et Compilation
-
-### Prérequis
-
-* **Système d'exploitation** : Windows (nécessaire pour `windows.h`, `conio.h` et la gestion du curseur).
-* **Encodage** : Console configurée en UTF-8 pour l'affichage des caractères spéciaux (cœurs, blocs).
-* **Compilateur** : GCC (MinGW) recommandé.
-
-### Compilation
-
-Pour compiler le projet complet, ouvrez votre terminal dans le dossier du projet et exécutez :
-
-```bash
-gcc *.c -o ZIP_Game.exe
-
+```mermaid
+flowchart LR
+    A[Case de départ<br/>aléatoire] --> B[Parcours en profondeur<br/>avec retour arrière]
+    B -->|chemin couvrant<br/>toutes les cases| C[Répartition des chiffres<br/>le long du chemin]
+    B -->|timeout 0,9 s| A
+    C --> D[Grille jouable]
 ```
 
----
+1. **Chemin hamiltonien.** Un parcours en profondeur récursif (backtracking) cherche un chemin qui visite chaque case exactement une fois.
+   À chaque étape, les directions sont **mélangées aléatoirement** puis triées selon l'**heuristique de Warnsdorff** : on explore d'abord la case qui a le moins d'issues, ce qui évite de s'enfermer.
+   Résultat : un chemin différent à chaque partie, trouvé quasi instantanément même en 10×10 (un timeout relance la recherche dans le pire cas).
+2. **Contrainte de parité.** Sur une grille de taille impaire, un chemin hamiltonien ne peut partir que d'une case « noire » d'un damier (`(x + y)` pair). Le départ est tiré en conséquence.
+3. **Placement des chiffres.** Le `1` est posé au début du chemin, le dernier chiffre à la fin, les autres régulièrement espacés avec une variation aléatoire de ±20 %.
 
-## 🏗️ Architecture du Projet
+## Architecture
 
-Le programme suit un **découpage modulaire** pour séparer la logique, l'affichage et la gestion des données :
+```
+zip-puzzle/
+├── include/
+│   ├── grille.h         # structures Case / Grille / Position, constantes, prototypes
+│   ├── sauvegarde.h
+│   └── console.h
+├── src/
+│   ├── main.c           # menu, configuration d'une partie, boucle de jeu
+│   ├── generation.c     # chemin hamiltonien + placement des chiffres
+│   ├── deplacement.c    # règles de déplacement et retour arrière
+│   ├── victoire.c       # condition de victoire
+│   ├── grille.c         # initialisation et rendu couleur de la grille
+│   ├── sauvegarde.c     # lecture / écriture de sauvegarde.txt
+│   └── console.c        # API console Windows (UTF-8, ANSI, curseur)
+├── tests/
+│   └── test_logique.c   # tests de la logique, sans interface
+├── docs/                # captures, notes de release
+├── Makefile
+└── .github/workflows/   # CI : build, tests, release
+```
 
-* **`main.c`** :
-  * Point d'entrée du programme.
-  * Contient la **boucle principale** de l'application (Menu ↔ Jeu).
-  * Gère l'initialisation et les transitions entre les écrans.
+Chaque case stocke deux informations : `numero`, l'ordre de passage du joueur (0 = libre), et `chiffre`, l'objectif imposé (0 = aucun).
+Le retour arrière se résume alors à une règle simple : on ne peut revenir que sur la case de `numero` immédiatement inférieur, que l'on remet à 0.
 
+## Compiler depuis les sources
 
-* **`grille.c` & `grille.h`** :
-  * Gère la structure de données `Grille`.
-  * `initialiser_grille` : Allocation mémoire et configuration.
-  * `afficher_grille` : Rendu visuel avancé avec **dégradé de couleurs ANSI** (Rouge → Bleu) pour visualiser la progression du chemin.
+Prérequis : Windows et GCC (par exemple [MSYS2](https://www.msys2.org/) UCRT64 : `pacman -S mingw-w64-ucrt-x86_64-gcc make`).
 
+```bash
+make          # produit zip.exe
+make test     # lance les tests de la logique
+make run      # compile et lance le jeu
+```
 
-* **`deplacement.c`** :
-  * Moteur physique du jeu.
-  * `deplacer_curseur` : Gère les collisions, valide l'ordre des presets et implémente la logique de **backtracking**.
-  * Interprète les codes ASCII des flèches directionnelles.
+Sans `make` : `gcc -std=c11 -O2 -Iinclude src/*.c -o zip.exe`
 
+## Équipe
 
-* **`algo chemin.c`** :
-  * Générateur de niveau procédural.
-  * `hamiltonien` : Algorithme de recherche récursif (backtracking) pour garantir qu'une solution existe.
-  * Intègre un **timeout** (sécurité temporelle) pour éviter les blocages lors de la génération de grandes grilles (10x10).
-  * `placer_numeros_sur_chemin` : Distribue intelligemment les objectifs sur le chemin validé.
+Projet réalisé en équipe de cinq dans le cadre d'une **SAE de première année de BUT Informatique** (semestre 1, 2025-2026).
 
+| Membre | Contributions principales |
+|---|---|
+| **Emilien Brando** | Sauvegarde / chargement, règles de déplacement, intégration et menu, refonte du dépôt |
+| **Anouk Ober** | Génération des grilles (chemin hamiltonien), rendu couleur, condition de victoire |
+| **Yanis Benmira** | Sauvegarde / chargement, création du dépôt |
+| **Noah Delattre** | Structures de données, initialisation de la grille, premier menu |
+| **London Osseti-Fort** | Interface et affichage de la grille |
 
-* **`sauvegarde.c`** :
-  * Gestion de la persistance des données.
-  * Sérialise la grille, la position du joueur et l'historique dans `sauvegarde.txt`.
-
-
-* **`fonctions_refresh.c`** :
-  * Outils d'optimisation d'affichage.
-  * `gotoxy` : Permet de rafraîchir l'écran sans clignotement en déplaçant le curseur console.
-  * `cacher_curseur` : Masque le curseur clignotant de Windows pour une meilleure esthétique.
-
-
-* **`gagne.c`** :
-  * `a_gagne` : Vérifie la condition de victoire (remplissage total de la grille).
-
-
-
----
-
-### 👥 Auteurs
-
-Projet réalisé par l'équipe :
-
-* **Emilien BRANDO**
-* **Yanis BENMIRA**
-* **Anouk OBER**
-* **London OSSETI-FORT**
-* **Noah DELATTRE**
+Dépôt d'origine : [yvnis22/Projet-ZIP](https://github.com/yvnis22/Projet-ZIP). L'historique Git complet de l'équipe est conservé ici.
