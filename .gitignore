@@ -1,0 +1,11 @@
+# Binaires et objets
+build/
+*.exe
+*.o
+
+# Sauvegarde locale du jeu
+sauvegarde.txt
+
+# Editeurs
+.vscode/
+.idea/

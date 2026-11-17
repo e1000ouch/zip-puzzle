@@ -5,7 +5,7 @@
 #include <time.h>
 #include <conio.h>
 #include <windows.h>
-#include "refresh.h"
+#include "console.h"
 
 int hamiltonien_boucle(int path, time_t start_time, double time_limit);
 
